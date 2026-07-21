@@ -1,0 +1,15 @@
+{
+  "name": "chunk-and-speak",
+  "private": true,
+  "version": "1.0.0",
+  "description": "英语语块拆解与口语转化器",
+  "scripts": {
+    "install:all": "npm install && npm install --prefix client && npm install --prefix server",
+    "dev": "concurrently -n server,client -c yellow,cyan \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "build": "npm run build --prefix client",
+    "start": "npm run start --prefix server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

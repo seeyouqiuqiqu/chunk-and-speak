@@ -1,0 +1,13 @@
+node_modules
+client/node_modules
+server/node_modules
+client/dist
+.env
+client/.env
+server/.env
+.DS_Store
+*.log
+npm-debug.log*
+
+# 项目需求文档（仅本地保留）
+lexical_chunk.md

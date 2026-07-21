@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-amber-50 text-gray-800 antialiased;
+  }
+}
+
+@layer components {
+  .markdown-body {
+    @apply leading-relaxed text-gray-700;
+  }
+
+  .markdown-body h2 {
+    @apply mt-8 mb-3 flex items-center gap-2 border-l-4 border-amber-500 pl-3 text-lg font-bold text-amber-800 first:mt-0;
+  }
+
+  .markdown-body h3 {
+    @apply mt-5 mb-2 text-base font-semibold text-amber-800;
+  }
+
+  .markdown-body p {
+    @apply mb-3;
+  }
+
+  .markdown-body ul {
+    @apply mb-3 list-disc space-y-2 pl-5;
+  }
+
+  .markdown-body ol {
+    @apply mb-3 list-decimal space-y-2 pl-5;
+  }
+
+  .markdown-body strong {
+    @apply font-semibold text-amber-900;
+  }
+
+  .markdown-body table {
+    @apply w-full min-w-[560px] border-collapse text-sm;
+  }
+
+  .markdown-body thead {
+    @apply bg-amber-100 text-amber-900;
+  }
+
+  .markdown-body th {
+    @apply px-3 py-2.5 text-left font-semibold;
+  }
+
+  .markdown-body td {
+    @apply px-3 py-2.5 align-top break-words border-b border-amber-100;
+  }
+
+  .markdown-body tbody tr:nth-child(even) {
+    @apply bg-amber-50/70;
+  }
+
+  .markdown-body tbody tr:nth-child(odd) {
+    @apply bg-white;
+  }
+
+  .markdown-body blockquote {
+    @apply my-3 border-l-4 border-amber-300 pl-4 text-gray-600 italic;
+  }
+
+  .markdown-body code {
+    @apply rounded bg-amber-100 px-1.5 py-0.5 font-mono text-sm text-amber-900;
+  }
+}
