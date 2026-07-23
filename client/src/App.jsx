@@ -4,19 +4,16 @@ import toast from 'react-hot-toast'
 import InputPanel from './components/InputPanel.jsx'
 import OutputPanel from './components/OutputPanel.jsx'
 import { parseTextStream } from './services/parseApi.js'
+import { countEnglishWords, detectParseMode } from './utils/wordUtils.js'
 
 const FIRST_BYTE_TIMEOUT_MS = 15000
-
-function countEnglishWords(text) {
-  const matches = text.match(/[A-Za-z]+(?:'[A-Za-z]+)?/g)
-  return matches ? matches.length : 0
-}
 
 export default function App() {
   const [value, setValue] = useState('')
   const [content, setContent] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [parseMode, setParseMode] = useState(null)
 
   const abortRef = useRef(null)
   const timeoutRef = useRef(null)
@@ -41,10 +38,14 @@ export default function App() {
   const handleSubmit = useCallback(async () => {
     const trimmed = value.trim()
 
-    if (!trimmed) return
+    if (!trimmed) {
+      toast.error('请输入需要解析的英文内容')
+      return
+    }
 
-    if (countEnglishWords(trimmed) < 3) {
-      toast.error('文本太短，请至少输入一个完整短句')
+    const mode = detectParseMode(trimmed)
+    if (!mode || countEnglishWords(trimmed) < 1) {
+      toast.error('请输入有效的英文单词、短语或句子')
       return
     }
 
@@ -67,12 +68,18 @@ export default function App() {
     setIsLoading(true)
     setContent('')
     setError('')
+    setParseMode(mode)
 
     let gotFirstByte = false
 
     try {
       await parseTextStream(trimmed, {
         signal: controller.signal,
+        onMode: (serverMode) => {
+          if (serverMode === 'vocabulary' || serverMode === 'chunk') {
+            setParseMode(serverMode)
+          }
+        },
         onChunk: (chunk) => {
           if (!gotFirstByte) {
             gotFirstByte = true
@@ -147,7 +154,12 @@ export default function App() {
           isLoading={isLoading}
         />
         <div ref={outputRef}>
-          <OutputPanel content={content} isLoading={isLoading} error={error} />
+          <OutputPanel
+            content={content}
+            isLoading={isLoading}
+            error={error}
+            mode={parseMode}
+          />
         </div>
       </main>
 

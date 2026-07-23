@@ -1,14 +1,10 @@
 import { Router } from 'express'
-import { SYSTEM_PROMPT, buildUserPrompt } from '../prompts.js'
+import { getPromptsForText } from '../prompts.js'
+import { countEnglishWords, detectParseMode } from '../wordUtils.js'
 
 const router = Router()
 
 const MAX_CHARS = 10000
-
-function countEnglishWords(text) {
-  const matches = text.match(/[A-Za-z]+(?:'[A-Za-z]+)?/g)
-  return matches ? matches.length : 0
-}
 
 function getUpstreamErrorStatus(status) {
   if (status === 429) return 429
@@ -21,21 +17,25 @@ router.post('/', async (req, res) => {
   const { text } = req.body ?? {}
 
   if (typeof text !== 'string') {
-    return res.status(400).json({ error: '文本太短，请至少输入一个完整短句' })
+    return res.status(400).json({ error: '请输入需要解析的英文内容' })
   }
 
   const trimmed = text.trim()
   if (!trimmed) {
-    return res.status(400).json({ error: '文本太短，请至少输入一个完整短句' })
+    return res.status(400).json({ error: '请输入需要解析的英文内容' })
   }
 
   if (trimmed.length > MAX_CHARS) {
     return res.status(400).json({ error: `文本过长，请控制在 ${MAX_CHARS} 个字符以内` })
   }
 
-  if (countEnglishWords(trimmed) < 3) {
-    return res.status(400).json({ error: '文本太短，请至少输入一个完整短句' })
+  const wordCount = countEnglishWords(trimmed)
+  if (wordCount < 1) {
+    return res.status(400).json({ error: '请输入有效的英文单词、短语或句子' })
   }
+
+  const mode = detectParseMode(trimmed)
+  const { systemPrompt, userPrompt } = getPromptsForText(trimmed)
 
   const baseURL = process.env.AI_BASE_URL?.replace(/\/$/, '')
   const apiKey = process.env.AI_API_KEY
@@ -73,8 +73,8 @@ router.post('/', async (req, res) => {
         temperature: 0.5,
         stream: true,
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: buildUserPrompt(trimmed) },
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
         ],
       }),
       signal: upstreamController.signal,
@@ -94,6 +94,8 @@ router.post('/', async (req, res) => {
     res.setHeader('Cache-Control', 'no-cache')
     res.setHeader('Connection', 'keep-alive')
     res.setHeader('X-Accel-Buffering', 'no')
+    res.setHeader('X-Parse-Mode', mode)
+    res.setHeader('Access-Control-Expose-Headers', 'X-Parse-Mode')
     res.flushHeaders?.()
 
     const reader = upstream.body.getReader()

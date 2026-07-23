@@ -8,9 +8,13 @@ function getApiBase() {
 /**
  * 流式解析英文文本。
  * @param {string} text
- * @param {{ signal?: AbortSignal, onChunk?: (chunk: string) => void }} options
+ * @param {{
+ *   signal?: AbortSignal,
+ *   onChunk?: (chunk: string) => void,
+ *   onMode?: (mode: string) => void
+ * }} options
  */
-export async function parseTextStream(text, { signal, onChunk } = {}) {
+export async function parseTextStream(text, { signal, onChunk, onMode } = {}) {
   const base = getApiBase()
   let response
 
@@ -43,6 +47,9 @@ export async function parseTextStream(text, { signal, onChunk } = {}) {
     if (response.status === 504) error.code = 'TIMEOUT'
     throw error
   }
+
+  const headerMode = response.headers.get('X-Parse-Mode')
+  if (headerMode) onMode?.(headerMode)
 
   if (!response.body) {
     throw new Error('解析服务暂时不可用，请检查服务配置')
